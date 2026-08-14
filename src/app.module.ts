@@ -17,7 +17,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       synchronize: true,
     }),
 
-    // ESTA LÍNEA TE FALTABA
     UsersModule,
   ],
 
