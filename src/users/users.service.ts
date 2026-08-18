@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
 
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -12,6 +13,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
+  private readonly saltRounds = 10;
+
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
@@ -28,7 +31,14 @@ export class UsersService {
       throw new ConflictException('El correo ya está registrado');
     }
 
-    const user = this.usersRepository.create(createUserDto);
+    const hashedPassword = await bcrypt.hash(
+      createUserDto.password,
+      this.saltRounds,
+    );
+    const user = this.usersRepository.create({
+      ...createUserDto,
+      password: hashedPassword,
+    });
 
     return await this.usersRepository.save(user);
   }
@@ -45,24 +55,29 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException(
-        `No se encontró el usuario con id ${id}`,
-      );
+      throw new NotFoundException(`No se encontró el usuario con id ${id}`);
     }
 
     return user;
   }
 
   async findByEmail(email: string) {
-    return await this.usersRepository.findOne({
-      where: {
-        email,
-      },
-    });
+    return await this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.email = :email', { email })
+      .getOne();
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
     const user = await this.findOne(id);
+
+    if (updateUserDto.password) {
+      updateUserDto.password = await bcrypt.hash(
+        updateUserDto.password,
+        this.saltRounds,
+      );
+    }
 
     Object.assign(user, updateUserDto);
 
