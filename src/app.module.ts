@@ -7,6 +7,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { CategoriesModule } from './categories/categories.module';
 import { JobsModule } from './jobs/jobs.module';
+import { ApplicationsModule } from './applications/applications.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { JobsModule } from './jobs/jobs.module';
     AuthModule,
     CategoriesModule,
     JobsModule,
+    ApplicationsModule,
   ],
 
   controllers: [AppController],
