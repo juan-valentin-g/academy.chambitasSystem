@@ -5,9 +5,10 @@ import { Job } from '../jobs/entities/job.entity';
 import { ApplicationsController } from './applications.controller';
 import { ApplicationsService } from './applications.service';
 import { Application } from './entities/application.entity';
+import { Match } from '../matches/entities/match.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Application, Job]), AuthModule],
+  imports: [TypeOrmModule.forFeature([Application, Job, Match]), AuthModule],
   controllers: [ApplicationsController],
   providers: [ApplicationsService],
   exports: [ApplicationsService],

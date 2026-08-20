@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { CategoriesModule } from './categories/categories.module';
 import { JobsModule } from './jobs/jobs.module';
 import { ApplicationsModule } from './applications/applications.module';
+import { MatchesModule } from './matches/matches.module';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { ApplicationsModule } from './applications/applications.module';
         host: configService.get<string>('DB_HOST', 'localhost'),
         port: configService.get<number>('DB_PORT', 3306),
         username: configService.get<string>('DB_USERNAME', 'root'),
-        password: configService.get<string>('DB_PASSWORD', '12345678'),
+        password: configService.get<string>('DB_PASSWORD', ''),
         database: configService.get<string>('DB_DATABASE', 'trabajos_db'),
         autoLoadEntities: true,
         synchronize:
@@ -34,6 +35,7 @@ import { ApplicationsModule } from './applications/applications.module';
     CategoriesModule,
     JobsModule,
     ApplicationsModule,
+    MatchesModule,
   ],
 
   controllers: [AppController],
