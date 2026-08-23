@@ -9,6 +9,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { JobsModule } from './jobs/jobs.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { MatchesModule } from './matches/matches.module';
+import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { MatchesModule } from './matches/matches.module';
     JobsModule,
     ApplicationsModule,
     MatchesModule,
+    ReviewsModule,
   ],
 
   controllers: [AppController],
