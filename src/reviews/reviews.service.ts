@@ -142,6 +142,6 @@ export class ReviewsService {
     }
 
     const driverError = error.driverError as { code?: string };
-    return driverError.code === 'ER_DUP_ENTRY';
+    return driverError.code === 'ER_DUP_ENTRY' || driverError.code === '23505';
   }
 }

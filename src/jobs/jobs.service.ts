@@ -42,7 +42,7 @@ export class JobsService {
       .orderBy('job.createdAt', 'DESC');
 
     if (query.titulo) {
-      builder.andWhere('job.titulo LIKE :titulo', {
+      builder.andWhere('job.titulo ILIKE :titulo', {
         titulo: `%${query.titulo.trim()}%`,
       });
     }
@@ -54,12 +54,20 @@ export class JobsService {
     }
 
     if (query.ubicacion) {
-      builder.andWhere('job.ubicacion LIKE :ubicacion', {
+      builder.andWhere('job.ubicacion ILIKE :ubicacion', {
         ubicacion: `%${query.ubicacion.trim()}%`,
       });
     }
 
     return builder.getMany();
+  }
+
+  async findMine(ownerId: number) {
+    return this.jobsRepository.find({
+      where: { ownerId },
+      relations: { owner: true, category: true },
+      order: { createdAt: 'DESC' },
+    });
   }
 
   async findOne(id: number) {

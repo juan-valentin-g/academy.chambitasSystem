@@ -13,11 +13,6 @@ import {
 } from 'typeorm';
 
 import {
-  Application,
-  ApplicationStatus,
-} from '../applications/entities/application.entity';
-
-import {
   Job,
   JobStatus,
 } from '../jobs/entities/job.entity';
@@ -32,88 +27,8 @@ export class MatchesService {
   constructor(
     @InjectRepository(Match)
     private readonly matchesRepository: Repository<Match>,
-
-    @InjectRepository(Application)
-    private readonly applicationsRepository: Repository<Application>,
-
-    @InjectRepository(Job)
-    private readonly jobsRepository: Repository<Job>,
-
     private readonly dataSource: DataSource,
   ) {}
-
-  // crear un match a partir de una postulacion
- 
-  async createFromApplication(
-    ownerId: number,
-    applicationId: number,
-  ) {
-    const application =
-      await this.applicationsRepository.findOne({
-        where: {
-          id: applicationId,
-        },
-
-        relations: {
-          job: true,
-          applicant: true,
-        },
-      });
-
-    if (!application) {
-      throw new NotFoundException(
-        'No se encontro la postulacion',
-      );
-    }
-
-    if (application.job.ownerId !== ownerId) {
-      throw new ForbiddenException(
-        'Solo el propietario del trabajo puede generar el match',
-      );
-    }
-
-    if (
-      application.estado !==
-      ApplicationStatus.ACEPTADA
-    ) {
-      throw new ConflictException(
-        'La postulacion debe estar aceptada para generar un match',
-      );
-    }
-
-    const existingMatch =
-      await this.matchesRepository.findOne({
-        where: [
-          {
-            applicationId: application.id,
-          },
-          {
-            jobId: application.jobId,
-          },
-        ],
-      });
-
-    if (existingMatch) {
-      throw new ConflictException(
-        'Ya existe un match para esta postulacion o trabajo',
-      );
-    }
-
-    const match = this.matchesRepository.create({
-      applicationId: application.id,
-      jobId: application.jobId,
-
-      
-      employerId: application.job.ownerId,
-
-      
-      workerId: application.applicantId,
-
-      estado: MatchStatus.ACTIVO,
-    });
-
-    return this.matchesRepository.save(match);
-  }
 
  
   // ver los matches propios de un usuario

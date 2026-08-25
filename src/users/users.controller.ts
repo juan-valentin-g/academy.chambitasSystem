@@ -1,40 +1,60 @@
-import { Body, Controller, Param, ParseIntPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Request as RequestDecorator,
+  UseGuards,
+} from '@nestjs/common';
+import { Request } from 'express';
 
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UpdateUserStatusDto } from './dto/update-user-status.dto';
+import { User, UserRole } from './entities/user.entity';
+
+interface AuthenticatedRequest extends Request {
+  user: User;
+}
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  // CRUD deshabilitado temporalmente: el registro publico se realiza en
-  // POST /auth/register. Para reactivar una ruta, restaura su decorador HTTP.
-  // @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  profile(@RequestDecorator() request: AuthenticatedRequest) {
+    return request.user;
   }
 
-  // @Get()
+  @UseGuards(JwtAuthGuard)
+  @Patch('profile')
+  updateProfile(
+    @RequestDecorator() request: AuthenticatedRequest,
+    @Body() updateProfileDto: UpdateProfileDto,
+  ) {
+    return this.usersService.update(request.user.id, updateProfileDto);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Get()
   findAll() {
     return this.usersService.findAll();
   }
 
-  // @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.findOne(id);
-  }
-
-  // @Patch(':id')
-  update(
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Patch(':id/status')
+  updateStatus(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateUserDto: UpdateUserDto,
+    @Body() updateUserStatusDto: UpdateUserStatusDto,
   ) {
-    return this.usersService.update(id, updateUserDto);
-  }
-
-  // @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.remove(id);
+    return this.usersService.updateStatus(id, updateUserStatusDto.activo);
   }
 }

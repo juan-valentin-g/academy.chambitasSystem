@@ -44,7 +44,9 @@ export class UsersService {
   }
 
   async findAll() {
-    return await this.usersRepository.find();
+    return this.usersRepository.find({
+      order: { createdAt: 'DESC' },
+    });
   }
 
   async findOne(id: number) {
@@ -92,5 +94,11 @@ export class UsersService {
     return {
       message: 'Usuario eliminado correctamente',
     };
+  }
+
+  async updateStatus(id: number, activo: boolean) {
+    const user = await this.findOne(id);
+    user.activo = activo;
+    return this.usersRepository.save(user);
   }
 }

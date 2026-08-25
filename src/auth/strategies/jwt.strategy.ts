@@ -20,7 +20,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: JwtPayload) {
     try {
-      return await this.usersService.findOne(payload.sub);
+      const user = await this.usersService.findOne(payload.sub);
+      if (!user.activo) {
+        throw new UnauthorizedException('La cuenta esta desactivada');
+      }
+      return user;
     } catch {
       throw new UnauthorizedException('Token no valido');
     }

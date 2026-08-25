@@ -144,6 +144,22 @@ export class ApplicationsService {
     });
   }
 
+  async findMine(applicantId: number) {
+    return this.applicationsRepository.find({
+      where: { applicantId },
+      relations: {
+        job: {
+          category: true,
+          owner: true,
+        },
+        applicant: true,
+      },
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+  }
+
  //aceptar una postulacion y crear un match
 
   async accept(
@@ -386,9 +402,6 @@ export class ApplicationsService {
         code?: string;
       };
 
-    return (
-      driverError.code ===
-      'ER_DUP_ENTRY'
-    );
+    return driverError.code === 'ER_DUP_ENTRY' || driverError.code === '23505';
   }
 }

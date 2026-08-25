@@ -4,6 +4,9 @@ import { JobsService } from './jobs.service';
 
 describe('JobsController', () => {
   let controller: JobsController;
+  const jobsService = {
+    findMine: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -11,7 +14,7 @@ describe('JobsController', () => {
       providers: [
         {
           provide: JobsService,
-          useValue: {},
+          useValue: jobsService,
         },
       ],
     }).compile();
@@ -21,5 +24,13 @@ describe('JobsController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  it('uses the authenticated user for the owned jobs query', async () => {
+    jobsService.findMine.mockResolvedValue([]);
+
+    await controller.findMine({ user: { id: 7 } } as never);
+
+    expect(jobsService.findMine).toHaveBeenCalledWith(7);
   });
 });

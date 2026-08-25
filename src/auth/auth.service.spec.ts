@@ -25,6 +25,7 @@ describe('AuthService', () => {
     rol: UserRole.TRABAJADOR,
     descripcion: null as unknown as string,
     foto: null as unknown as string,
+    activo: true,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
   };
@@ -102,6 +103,20 @@ describe('AuthService', () => {
       service.login({
         email: baseUser.email,
         password: 'incorrect-password',
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('rejects a disabled account', async () => {
+    usersService.findByEmail.mockResolvedValue({
+      ...baseUser,
+      activo: false,
+    });
+
+    await expect(
+      service.login({
+        email: baseUser.email,
+        password: 'secret123',
       }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });

@@ -1,9 +1,10 @@
 import {
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 
 import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -54,7 +55,19 @@ export class CategoriesService {
   async remove(id: number) {
     const category = await this.findOne(id);
 
-    await this.categoriesRepository.remove(category);
+    try {
+      await this.categoriesRepository.remove(category);
+    } catch (error) {
+      if (
+        error instanceof QueryFailedError &&
+        (error.driverError as { code?: string }).code === '23503'
+      ) {
+        throw new ConflictException(
+          'No se puede eliminar una categoria que tiene trabajos asociados',
+        );
+      }
+      throw error;
+    }
 
     return {
       message: 'Categoría eliminada correctamente',

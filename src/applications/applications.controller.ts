@@ -24,6 +24,11 @@ interface AuthenticatedRequest extends Request {
 export class ApplicationsController {
   constructor(private readonly applicationsService: ApplicationsService) {}
 
+  @Get('applications/my')
+  findMine(@RequestDecorator() request: AuthenticatedRequest) {
+    return this.applicationsService.findMine(request.user.id);
+  }
+
   @Post('jobs/:jobId/applications')
   create(
     @RequestDecorator() request: AuthenticatedRequest,

@@ -19,6 +19,7 @@ describe('JobsService', () => {
     jobsRepository = {
       create: jest.fn(),
       save: jest.fn(),
+      find: jest.fn(),
       findOne: jest.fn(),
       remove: jest.fn(),
       createQueryBuilder: jest.fn(),
@@ -131,7 +132,7 @@ describe('JobsService', () => {
     expect(builder.where).toHaveBeenCalledWith('job.estado = :estado', {
       estado: JobStatus.PUBLICADO,
     });
-    expect(builder.andWhere).toHaveBeenCalledWith('job.titulo LIKE :titulo', {
+    expect(builder.andWhere).toHaveBeenCalledWith('job.titulo ILIKE :titulo', {
       titulo: '%pintura%',
     });
     expect(builder.andWhere).toHaveBeenCalledWith(
@@ -139,8 +140,23 @@ describe('JobsService', () => {
       { categoryId: 3 },
     );
     expect(builder.andWhere).toHaveBeenCalledWith(
-      'job.ubicacion LIKE :ubicacion',
+      'job.ubicacion ILIKE :ubicacion',
       { ubicacion: '%Oaxaca%' },
     );
+  });
+
+  it('returns every job owned by the authenticated user', async () => {
+    const ownedJobs = [
+      { id: 10, ownerId: 7, estado: JobStatus.PUBLICADO },
+      { id: 11, ownerId: 7, estado: JobStatus.EN_PROCESO },
+    ] as Job[];
+    jobsRepository.find?.mockResolvedValue(ownedJobs);
+
+    await expect(service.findMine(7)).resolves.toEqual(ownedJobs);
+    expect(jobsRepository.find).toHaveBeenCalledWith({
+      where: { ownerId: 7 },
+      relations: { owner: true, category: true },
+      order: { createdAt: 'DESC' },
+    });
   });
 });

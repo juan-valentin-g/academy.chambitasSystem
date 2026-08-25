@@ -5,6 +5,10 @@ import { User } from './entities/user.entity';
 
 describe('UsersService', () => {
   let service: UsersService;
+  const usersRepository = {
+    findOne: jest.fn(),
+    save: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -12,7 +16,7 @@ describe('UsersService', () => {
         UsersService,
         {
           provide: getRepositoryToken(User),
-          useValue: {},
+          useValue: usersRepository,
         },
       ],
     }).compile();
@@ -22,5 +26,17 @@ describe('UsersService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  it('persists a user active status change', async () => {
+    const user = { id: 8, activo: true } as User;
+    usersRepository.findOne.mockResolvedValue(user);
+    usersRepository.save.mockImplementation(async (value) => value);
+
+    await expect(service.updateStatus(8, false)).resolves.toMatchObject({
+      id: 8,
+      activo: false,
+    });
+    expect(usersRepository.save).toHaveBeenCalledWith(user);
   });
 });

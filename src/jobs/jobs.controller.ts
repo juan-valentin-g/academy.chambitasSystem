@@ -41,6 +41,12 @@ export class JobsController {
     return this.jobsService.findAll(query);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('mine')
+  findMine(@RequestDecorator() request: AuthenticatedRequest) {
+    return this.jobsService.findMine(request.user.id);
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.jobsService.findOne(id);

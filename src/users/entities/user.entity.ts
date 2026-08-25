@@ -64,6 +64,12 @@ export class User {
   })
   foto: string;
 
+  @Column({
+    type: 'boolean',
+    default: true,
+  })
+  activo: boolean;
+
   @CreateDateColumn({
     name: 'created_at',
   })

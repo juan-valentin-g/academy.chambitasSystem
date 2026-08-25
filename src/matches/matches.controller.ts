@@ -4,7 +4,6 @@ import {
   Param,
   ParseIntPipe,
   Patch,
-  Post,
   Request as RequestDecorator,
   UseGuards,
 } from '@nestjs/common';
@@ -27,23 +26,6 @@ export class MatchesController {
   constructor(
     private readonly matchesService: MatchesService,
   ) {}
-
-  @Post('applications/:applicationId')
-  create(
-    @RequestDecorator()
-    request: AuthenticatedRequest,
-
-    @Param(
-      'applicationId',
-      ParseIntPipe,
-    )
-    applicationId: number,
-  ) {
-    return this.matchesService.createFromApplication(
-      request.user.id,
-      applicationId,
-    );
-  }
 
   @Get()
   findMine(

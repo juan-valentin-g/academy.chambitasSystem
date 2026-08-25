@@ -7,6 +7,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Job, JobStatus } from '../jobs/entities/job.entity';
+import { Match, MatchStatus } from '../matches/entities/match.entity';
 import { ApplicationsService } from './applications.service';
 import { Application, ApplicationStatus } from './entities/application.entity';
 
@@ -18,13 +19,7 @@ describe('ApplicationsService', () => {
   let service: ApplicationsService;
   let applicationsRepository: MockRepository<Application>;
   let jobsRepository: MockRepository<Job>;
-  let dataSource: {
-    transaction: jest.MockedFunction<
-      (
-        callback: (manager: EntityManager) => Promise<Application>,
-      ) => Promise<Application>
-    >;
-  };
+  let dataSource: { transaction: jest.Mock };
 
   const publishedJob = {
     id: 10,
@@ -127,6 +122,23 @@ describe('ApplicationsService', () => {
     expect(applicationsRepository.find).not.toHaveBeenCalled();
   });
 
+  it('lists applications sent by the authenticated applicant', async () => {
+    const sentApplications = [
+      { id: 20, applicantId: 8, jobId: 10 },
+    ] as Application[];
+    applicationsRepository.find?.mockResolvedValue(sentApplications);
+
+    await expect(service.findMine(8)).resolves.toEqual(sentApplications);
+    expect(applicationsRepository.find).toHaveBeenCalledWith({
+      where: { applicantId: 8 },
+      relations: {
+        job: { category: true, owner: true },
+        applicant: true,
+      },
+      order: { createdAt: 'DESC' },
+    });
+  });
+
   it('rejects a pending application when requested by the owner', async () => {
     const application = {
       id: 20,
@@ -161,21 +173,44 @@ describe('ApplicationsService', () => {
       findOne: jest.fn().mockResolvedValue(application.job),
       save: jest.fn().mockResolvedValue(application.job),
     };
+    const savedMatch = {
+      id: 30,
+      applicationId: 20,
+      jobId: 10,
+      employerId: 5,
+      workerId: 8,
+      estado: MatchStatus.ACTIVO,
+    } as Match;
+    const transactionalMatches = {
+      findOne: jest.fn().mockResolvedValue(null),
+      create: jest.fn().mockReturnValue(savedMatch),
+      save: jest.fn().mockResolvedValue(savedMatch),
+    };
     const manager = {
-      getRepository: jest.fn((entity: typeof Application | typeof Job) =>
-        entity === Application ? transactionalApplications : transactionalJobs,
-      ),
+      getRepository: jest.fn((entity: typeof Application | typeof Job | typeof Match) => {
+        if (entity === Application) return transactionalApplications;
+        if (entity === Job) return transactionalJobs;
+        return transactionalMatches;
+      }),
     } as unknown as EntityManager;
     dataSource.transaction.mockImplementation((callback) => callback(manager));
 
     const result = await service.accept(5, 20);
 
-    expect(result.estado).toBe(ApplicationStatus.ACEPTADA);
-    expect(result.job.estado).toBe(JobStatus.EN_PROCESO);
+    expect(result).toBe(savedMatch);
+    expect(application.estado).toBe(ApplicationStatus.ACEPTADA);
+    expect(application.job.estado).toBe(JobStatus.EN_PROCESO);
     expect(transactionalApplications.update).toHaveBeenCalledWith(
       { jobId: 10, estado: ApplicationStatus.PENDIENTE },
       { estado: ApplicationStatus.RECHAZADA },
     );
     expect(transactionalJobs.save).toHaveBeenCalledWith(application.job);
+    expect(transactionalMatches.create).toHaveBeenCalledWith({
+      applicationId: 20,
+      jobId: 10,
+      employerId: 5,
+      workerId: 8,
+      estado: MatchStatus.ACTIVO,
+    });
   });
 });
